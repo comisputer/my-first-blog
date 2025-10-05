@@ -1,0 +1,16 @@
+@host = http://127.0.0.1:8000
+
+### 메인 페이지
+GET {{host}}/
+
+### 차트 페이지 (Vue + Plotly 템플릿)
+GET {{host}}/chart/
+
+### 차트 데이터 API (JSON)
+GET {{host}}/chart/data/
+Accept: application/json
+
+### Django Admin 로그인 페이지
+GET {{host}}/admin/login/?next=/admin/
+
+

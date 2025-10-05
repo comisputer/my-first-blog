@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vue + Plotly 혼합 차트</title>
+    <title>Vue + Chart.js 혼합 차트</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <style>
         body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; margin: 24px; }
         .container { max-width: 960px; margin: 0 auto; }
-        #chart { width: 100%; height: 480px; }
+        #chartWrap { width: 100%; height: 480px; }
         .controls { margin-bottom: 16px; display: flex; gap: 8px; align-items: center; }
         button { padding: 6px 12px; }
     </style>
@@ -17,12 +17,14 @@
 </head>
 <body>
 <div id="app" class="container">
-    <h1>Vue + Plotly 혼합형 차트(막대 + 선)</h1>
+    <h1>Vue + Chart.js 혼합형 차트(막대 + 선)</h1>
     <div class="controls">
         <button @click="reload">데이터 새로고침</button>
         <span v-if="loading">불러오는 중...</span>
     </div>
-    <div id="chart"></div>
+    <div id="chartWrap">
+        <canvas id="mixChart"></canvas>
+    </div>
 </div>
 
 <script>
@@ -33,6 +35,7 @@ createApp({
     return {
       loading: false,
       apiUrl: "{% url 'chart_data' %}",
+      chart: null,
     };
   },
   methods: {
@@ -41,35 +44,56 @@ createApp({
       try {
         const res = await fetch(this.apiUrl, { headers: { 'Accept': 'application/json' } });
         const data = await res.json();
+        const datasets = [
+          {
+            type: 'bar',
+            label: data.bar.name,
+            data: data.bar.values,
+            backgroundColor: 'rgba(59, 130, 246, 0.6)',
+            borderColor: 'rgba(59, 130, 246, 1)',
+            borderWidth: 1,
+          },
+          {
+            type: 'line',
+            label: data.line.name,
+            data: data.line.values,
+            borderColor: 'rgba(239, 68, 68, 1)',
+            backgroundColor: 'rgba(239, 68, 68, 0.2)',
+            borderWidth: 3,
+            tension: 0.3,
+            pointRadius: 4,
+          }
+        ];
 
-        const barTrace = {
+        const config = {
           type: 'bar',
-          x: data.labels,
-          y: data.bar.values,
-          name: data.bar.name,
-          marker: { color: '#3b82f6' }
+          data: {
+            labels: data.labels,
+            datasets,
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { position: 'top' },
+              title: { display: true, text: '막대 + 선 (Chart.js)' }
+            },
+            scales: {
+              x: { title: { display: true, text: '월' } },
+              y: { title: { display: true, text: '값' }, beginAtZero: true }
+            }
+          }
         };
 
-        const lineTrace = {
-          type: 'scatter',
-          mode: 'lines+markers',
-          x: data.labels,
-          y: data.line.values,
-          name: data.line.name,
-          line: { color: '#ef4444', width: 3 },
-          marker: { size: 6 }
-        };
-
-        const layout = {
-          barmode: 'group',
-          margin: { t: 40, r: 20, b: 40, l: 48 },
-          legend: { orientation: 'h', x: 0, y: 1.15 },
-          xaxis: { title: '월' },
-          yaxis: { title: '값' },
-          hovermode: 'x unified'
-        };
-
-        Plotly.newPlot('chart', [barTrace, lineTrace], layout, { displayModeBar: true, responsive: true });
+        const ctx = document.getElementById('mixChart');
+        if (this.chart) {
+          this.chart.data.labels = config.data.labels;
+          this.chart.data.datasets = config.data.datasets;
+          this.chart.update();
+        } else {
+          this.chart = new Chart(ctx, config);
+        }
       } catch (e) {
         console.error(e);
         alert('데이터를 불러오는 중 오류가 발생했습니다.');
@@ -83,11 +107,11 @@ createApp({
   },
   mounted() {
     this.fetchData();
-    window.addEventListener('resize', () => Plotly.Plots.resize('chart'));
   }
 }).mount('#app');
 </script>
 </body>
 </html>
+
 
 

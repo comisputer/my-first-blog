@@ -14,3 +14,4 @@ Accept: application/json
 GET {{host}}/admin/login/?next=/admin/
 
 
+

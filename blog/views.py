@@ -32,3 +32,7 @@ def chart_data(request):
 
 def chart_page(request):
     return render(request, 'blog/chart.html')
+
+
+def chartjs_polar_page(request):
+    return render(request, 'blog/chartjs_polar.html')

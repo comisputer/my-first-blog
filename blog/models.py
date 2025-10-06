@@ -1,6 +1,15 @@
 from django.db import models
 from django.utils import timezone
-from djongo import models as djongo_models
+
+# 환경에 따른 모델 import
+try:
+    from djongo import models as djongo_models
+    USE_MONGODB = True
+    print("MongoDB 모델을 사용합니다.")
+except ImportError:
+    djongo_models = models  # SQLite용으로 일반 Django 모델 사용
+    USE_MONGODB = False
+    print("SQLite 모델을 사용합니다.")
 
 
 class Post(models.Model):

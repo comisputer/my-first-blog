@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MongoDB 블로그 포스트 상세</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .post-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .post-title {
+            color: #333;
+            font-size: 2em;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 15px;
+        }
+        .post-meta {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .post-content {
+            color: #555;
+            line-height: 1.8;
+            font-size: 1.1em;
+            margin-bottom: 25px;
+        }
+        .post-tags {
+            margin-bottom: 25px;
+        }
+        .tag {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-right: 8px;
+            display: inline-block;
+        }
+        .post-stats {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 25px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .comments-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .comment {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .comment-author {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .comment-content {
+            color: #555;
+            line-height: 1.6;
+        }
+        .comment-meta {
+            color: #666;
+            font-size: 0.8em;
+            margin-top: 10px;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .nav-links {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .nav-links a {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 0 10px;
+            display: inline-block;
+        }
+        .nav-links a:hover {
+            background: #5a6fd8;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📝 MongoDB 블로그 포스트</h1>
+        <p>MongoDB에서 가져온 블로그 포스트 상세 정보</p>
+    </div>
+
+    {% if error %}
+        <div class="error">
+            <h3>⚠️ 오류 발생</h3>
+            <p>{{ error }}</p>
+        </div>
+    {% else %}
+        <div class="post-container">
+            <h1 class="post-title">{{ blog_post.title }}</h1>
+            
+            <div class="post-meta">
+                <span><strong>작성자:</strong> {{ blog_post.author_name }}</span>
+                <span><strong>작성일:</strong> {{ blog_post.created_at|date:"Y년 m월 d일 H:i" }}</span>
+                <span><strong>수정일:</strong> {{ blog_post.updated_at|date:"Y년 m월 d일 H:i" }}</span>
+                <span><strong>상태:</strong> {% if blog_post.is_published %}게시됨{% else %}임시저장{% endif %}</span>
+            </div>
+            
+            <div class="post-content">
+                {{ blog_post.content|linebreaks }}
+            </div>
+            
+            {% if blog_post.tags %}
+                <div class="post-tags">
+                    <strong>태그:</strong>
+                    {% for tag in blog_post.tags %}
+                        <span class="tag">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div class="post-stats">
+                <div class="stat-item">
+                    <div class="stat-number">{{ blog_post.views_count }}</div>
+                    <div class="stat-label">👁️ 조회수</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ blog_post.likes_count }}</div>
+                    <div class="stat-label">❤️ 좋아요</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ comments_count }}</div>
+                    <div class="stat-label">💬 댓글</div>
+                </div>
+            </div>
+        </div>
+
+        {% if comments %}
+            <div class="comments-section">
+                <h3>💬 댓글 ({{ comments_count }}개)</h3>
+                {% for comment in comments %}
+                    <div class="comment">
+                        <div class="comment-author">{{ comment.author_name }}</div>
+                        <div class="comment-content">{{ comment.content|linebreaks }}</div>
+                        <div class="comment-meta">
+                            작성일: {{ comment.created_at|date:"Y년 m월 d일 H:i" }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="comments-section">
+                <h3>💬 댓글</h3>
+                <p>아직 댓글이 없습니다.</p>
+            </div>
+        {% endif %}
+    {% endif %}
+
+    <div class="nav-links">
+        <a href="{% url 'mongodb_blog_list' %}">📝 목록으로</a>
+        <a href="{% url 'mongodb_analytics' %}">📊 분석 대시보드</a>
+        <a href="{% url 'post_list' %}">🏠 홈으로</a>
+    </div>
+</body>
+</html>
